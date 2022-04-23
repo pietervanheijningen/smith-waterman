@@ -6,7 +6,6 @@ pattern = "BCB"
 
 # substitution matrix that is only supposed to work with A,B,C,D
 def sub_matrix(a, b):
-    # if ord(c)
     value = abs(ord(a) - ord(b))
     if value == 0:
         return 2
