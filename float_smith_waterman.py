@@ -53,13 +53,13 @@ def gap_penalty(k: int) -> int:
     return 2 * k
 
 
-def search_back_in_column(k, i, j) -> int:
+def search_back_in_column(k: int, i: int, j: int) -> int:
     if i - k == 0:
         return 0
     return max(H[i - k][j] - gap_penalty(k), search_back_in_column(k + 1, i, j))
 
 
-def search_back_in_row(k, i, j) -> int:
+def search_back_in_row(k: int, i: int, j: int) -> int:
     if j - k == 0:
         return 0
     return max(H[i][j - k] - gap_penalty(k), search_back_in_row(k + 1, i, j))
