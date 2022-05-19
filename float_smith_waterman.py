@@ -1,5 +1,5 @@
 import numpy as np
-
+from tabulate import tabulate
 
 # generates a random sequence of floats within a specified min, max and length
 def random_sequence(min_val: float, max_val: float, seq_length: int, seed: int) -> [float]:
@@ -77,6 +77,11 @@ for i in range(1, len(pattern) + 1):
         )
 
 # ------------------------------------- printing values ------------------------------------
-from tabulate import tabulate
 
-print(tabulate(H, showindex=([""] + rounded_pattern), headers=[round(x, 2) for x in sequence], tablefmt="presto"))
+rounded2_sequence = [round(x, 2) for x in sequence]  # for display purposes only
+rounded2_pattern = [round(x, 2) for x in pattern]  # for display purposes only
+
+print("Sequence: " + str(rounded2_sequence))
+print("Pattern: " + str(rounded2_pattern))
+print()
+print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded2_sequence, tablefmt="presto"))
