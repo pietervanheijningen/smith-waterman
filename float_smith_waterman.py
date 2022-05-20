@@ -14,7 +14,7 @@ def random_sequence(min_val: float, max_val: float, seq_length: int, seed: int) 
 def random_pattern(pattern_length: int, sequence: [float], seed: int) -> [float]:
     np.random.seed(seed)
     index = np.random.randint(pattern_length - 1, len(sequence))
-    return sequence[(index - pattern_length + 1):index]
+    return sequence[(index - pattern_length + 1):index], index
 
 
 def round_pattern(min_val: float, max_val: float, num_of_segments: int, pattern: [float]) -> [float]:
@@ -35,11 +35,11 @@ def round_pattern(min_val: float, max_val: float, num_of_segments: int, pattern:
 min_val = 0.0
 max_val = 10.0
 seq_length = 10000
-pattern_length = 100
+pattern_length = 5
 seed = 123
 
 sequence = random_sequence(min_val=min_val, max_val=max_val, seq_length=seq_length, seed=seed)
-pattern = random_pattern(pattern_length=pattern_length, sequence=sequence, seed=seed)
+pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence, seed=seed)
 
 num_of_segments = 3
 rounded_pattern = round_pattern(min_val=min_val, max_val=max_val, num_of_segments=num_of_segments, pattern=pattern)
@@ -89,8 +89,11 @@ for i in range(1, len(pattern) + 1):
 
 rounded2_sequence = [round(x, 2) for x in sequence]  # for display purposes only
 rounded2_pattern = [round(x, 2) for x in pattern]  # for display purposes only
+match_indexes = list(map(lambda x: x[1], np.argwhere(H == np.amax(H))))
 
 print("Sequence: " + str(rounded2_sequence))
 print("Pattern: " + str(rounded2_pattern))
-print()
-# print(tabulate(H, showindex=([""] + ronded2_pattern), headers=rounded2_sequence, tablefmt="presto"))
+print("Matched indexes: " + str(match_indexes))
+print("Actual index: " + str(pattern_index))
+
+# print(tabulate(H, showindex=([""] + rounded2_pattern), headers=rounded2_sequence, tablefmt="presto"))
