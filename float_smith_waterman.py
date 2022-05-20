@@ -1,4 +1,5 @@
 import numpy as np
+import functools
 from tabulate import tabulate
 
 # generates a random sequence of floats within a specified min, max and length
@@ -33,7 +34,7 @@ def round_pattern(min_val: float, max_val: float, num_of_segments: int, pattern:
 
 min_val = 0.0
 max_val = 10.0
-seq_length = 1000
+seq_length = 10000
 pattern_length = 100
 seed = 123
 
@@ -45,10 +46,12 @@ rounded_pattern = round_pattern(min_val=min_val, max_val=max_val, num_of_segment
 
 
 # ------------------------------------- smith waterman -------------------------------------
+@functools.cache
 def sub_matrix(a: float, b: float) -> int:
     return 1 if a == b else 0
 
 
+@functools.cache
 def gap_penalty(k: int) -> int:
     return 2 * k
 
