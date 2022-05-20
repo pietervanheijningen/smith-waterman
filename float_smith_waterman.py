@@ -33,8 +33,8 @@ def round_pattern(min_val: float, max_val: float, num_of_segments: int, pattern:
 
 min_val = 0.0
 max_val = 10.0
-seq_length = 20
-pattern_length = 5
+seq_length = 1000
+pattern_length = 100
 seed = 123
 
 sequence = random_sequence(min_val=min_val, max_val=max_val, seq_length=seq_length, seed=seed)
@@ -53,16 +53,22 @@ def gap_penalty(k: int) -> int:
     return 2 * k
 
 
-def search_back_in_column(k: int, i: int, j: int) -> int:
-    if i - k == 0:
-        return 0
-    return max(H[i - k][j] - gap_penalty(k), search_back_in_column(k + 1, i, j))
+def search_back_in_column(i: int, j: int) -> int:
+    maximum = H[i - 1][j] - gap_penalty(1)
+    for k in range(2, i + 1):
+        new_val = H[i - k][j] - gap_penalty(k)
+        if new_val > maximum:
+            maximum = new_val
+    return maximum
 
 
-def search_back_in_row(k: int, i: int, j: int) -> int:
-    if j - k == 0:
-        return 0
-    return max(H[i][j - k] - gap_penalty(k), search_back_in_row(k + 1, i, j))
+def search_back_in_row(i: int, j: int) -> int:
+    maximum = H[i][j - 1] - gap_penalty(1)
+    for k in range(2, i + 1):
+        new_val = H[i][j - k] - gap_penalty(k)
+        if new_val > maximum:
+            maximum = new_val
+    return maximum
 
 
 H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
@@ -71,8 +77,8 @@ for i in range(1, len(pattern) + 1):
     for j in range(1, len(sequence) + 1):
         H[i][j] = max(
             H[i - 1][j - 1] + sub_matrix(sequence[j - 1], pattern[i - 1]),
-            search_back_in_column(1, i, j),
-            search_back_in_row(1, i, j),
+            search_back_in_column(i, j),
+            search_back_in_row(i, j),
             0
         )
 
@@ -84,4 +90,4 @@ rounded2_pattern = [round(x, 2) for x in pattern]  # for display purposes only
 print("Sequence: " + str(rounded2_sequence))
 print("Pattern: " + str(rounded2_pattern))
 print()
-print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded2_sequence, tablefmt="presto"))
+# print(tabulate(H, showindex=([""] + ronded2_pattern), headers=rounded2_sequence, tablefmt="presto"))
