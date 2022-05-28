@@ -2,8 +2,8 @@ import numpy as np
 import functools
 from tabulate import tabulate
 
-# generates a random sequence of floats within a specified min, max and length
-def random_sequence(min_val: float, max_val: float, seq_length: int, seed: int) -> [float]:
+
+def random_sequence(seq_length: int) -> [float]:
     np.random.seed(seed)
     return list(map(
         lambda x: x * (max_val - min_val) + min_val,
@@ -11,42 +11,72 @@ def random_sequence(min_val: float, max_val: float, seq_length: int, seed: int) 
     ))
 
 
-def random_pattern(pattern_length: int, sequence: [float], seed: int) -> [float]:
+def random_pattern(pattern_length: int, sequence: [float]) -> [float]:
     np.random.seed(seed)
     index = np.random.randint(pattern_length - 1, len(sequence))
     return sequence[(index - pattern_length + 1):index], index
 
 
-def round_up(num_of_segments: int, pattern: [float]) -> [float]:
+def add_modifications(float_array: [float]) -> [float]:
+    # workaround for if the float is fixed.
+    rand_array = random_sequence(len(float_array) * 2)[len(float_array):]
+
+    modified_array = np.zeros(len(float_array))
+    for i in range(0, len(float_array)):
+        if prob_modification >= np.random.random_sample():
+            modified_array[i] = rand_array[i]
+        else:
+            modified_array[i] = float_array[i]
+    return modified_array
+
+
+def add_repetitions(float_array: [float]) -> [float]:
+    modified_array = []
+    for i in range(0, len(float_array)):
+        modified_array.append(float_array[i])
+        if prob_repetition >= np.random.random_sample():
+            modified_array.append(float_array[i])
+    return modified_array
+
+
+def round_up(num_of_segments: int, float_array: [float]) -> [float]:
     total_span = max_val - min_val
     segment_length = total_span / num_of_segments
 
-    rounded_pattern = pattern.copy()
-    for i in range(0, len(pattern)):
+    rounded_array = float_array.copy()
+    for i in range(0, len(float_array)):
         for seg_len_multiple in range(1, num_of_segments + 1):
             category = seg_len_multiple * segment_length
-            if pattern[i] <= category:
-                rounded_pattern[i] = round(category, 2)
+            if float_array[i] <= category:
+                rounded_array[i] = round(category, 2)
                 break
 
-    return rounded_pattern
+    return rounded_array
 
+
+# ------------------------------------- adjustable variables -------------------------------
 
 min_val = 0.0
 max_val = 10.0
 seq_length = 15
 pattern_length = 5
 seed = 123
+num_of_segments = 5
+prob_modification = 0.2
+prob_repetition = 0.3
 
-sequence = random_sequence(min_val=min_val, max_val=max_val, seq_length=seq_length, seed=seed)
-pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence, seed=seed)
+# ------------------------------------- /adjustable variables ------------------------------
 
-num_of_segments = 2
-rounded_pattern = round_up(num_of_segments=num_of_segments, pattern=pattern)
-rounded_sequence = round_up(num_of_segments=num_of_segments, pattern=sequence)
+sequence = random_sequence(seq_length=seq_length)
+pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
 
+sequence = add_repetitions(sequence)
 
 # ------------------------------------- smith waterman -------------------------------------
+rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
+rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
+
+
 @functools.cache
 def sub_matrix(a: float, b: float) -> int:
     return 1 if a == b else 0
@@ -92,8 +122,11 @@ rounded2_sequence = [round(x, 2) for x in sequence]  # for display purposes only
 rounded2_pattern = [round(x, 2) for x in pattern]  # for display purposes only
 match_indexes = list(map(lambda x: x[1], np.argwhere(H == np.amax(H))))
 
+print("(actual) Sequence: " + str(rounded2_sequence))
+print("(actual) Pattern: " + str(rounded2_pattern))
 print("Sequence: " + str(rounded_sequence))
 print("Pattern: " + str(rounded_pattern))
+print()
 print("Matched indexes: " + str(match_indexes))
 print("Actual index: " + str(pattern_index))
 
