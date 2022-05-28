@@ -17,7 +17,7 @@ def random_pattern(pattern_length: int, sequence: [float], seed: int) -> [float]
     return sequence[(index - pattern_length + 1):index], index
 
 
-def round_pattern(min_val: float, max_val: float, num_of_segments: int, pattern: [float]) -> [float]:
+def round_up(num_of_segments: int, pattern: [float]) -> [float]:
     total_span = max_val - min_val
     segment_length = total_span / num_of_segments
 
@@ -34,15 +34,16 @@ def round_pattern(min_val: float, max_val: float, num_of_segments: int, pattern:
 
 min_val = 0.0
 max_val = 10.0
-seq_length = 10000
+seq_length = 15
 pattern_length = 5
 seed = 123
 
 sequence = random_sequence(min_val=min_val, max_val=max_val, seq_length=seq_length, seed=seed)
 pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence, seed=seed)
 
-num_of_segments = 3
-rounded_pattern = round_pattern(min_val=min_val, max_val=max_val, num_of_segments=num_of_segments, pattern=pattern)
+num_of_segments = 2
+rounded_pattern = round_up(num_of_segments=num_of_segments, pattern=pattern)
+rounded_sequence = round_up(num_of_segments=num_of_segments, pattern=sequence)
 
 
 # ------------------------------------- smith waterman -------------------------------------
@@ -79,7 +80,7 @@ H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
 for i in range(1, len(pattern) + 1):
     for j in range(1, len(sequence) + 1):
         H[i][j] = max(
-            H[i - 1][j - 1] + sub_matrix(sequence[j - 1], pattern[i - 1]),
+            H[i - 1][j - 1] + sub_matrix(rounded_sequence[j - 1], rounded_pattern[i - 1]),
             search_back_in_column(i, j),
             search_back_in_row(i, j),
             0
@@ -91,9 +92,9 @@ rounded2_sequence = [round(x, 2) for x in sequence]  # for display purposes only
 rounded2_pattern = [round(x, 2) for x in pattern]  # for display purposes only
 match_indexes = list(map(lambda x: x[1], np.argwhere(H == np.amax(H))))
 
-print("Sequence: " + str(rounded2_sequence))
-print("Pattern: " + str(rounded2_pattern))
+print("Sequence: " + str(rounded_sequence))
+print("Pattern: " + str(rounded_pattern))
 print("Matched indexes: " + str(match_indexes))
 print("Actual index: " + str(pattern_index))
 
-# print(tabulate(H, showindex=([""] + rounded2_pattern), headers=rounded2_sequence, tablefmt="presto"))
+print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
