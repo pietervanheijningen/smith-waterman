@@ -32,17 +32,19 @@ def add_modifications(float_array: [float]) -> [float]:
 
 def add_repetitions(float_array: [float]) -> [float]:
     modified_array = []
+    to_old_index_map = []
+    j = 0
     for i in range(0, len(float_array)):
         modified_array.append(float_array[i])
+        to_old_index_map.append(j)
         if prob_repetition >= np.random.random_sample():
             modified_array.append(float_array[i])
-    return modified_array
+            to_old_index_map.append(-1)
+        j += 1
+    return modified_array, to_old_index_map
 
 
 def round_up(num_of_segments: int, float_array: [float]) -> [float]:
-    total_span = max_val - min_val
-    segment_length = total_span / num_of_segments
-
     rounded_array = float_array.copy()
     for i in range(0, len(float_array)):
         for seg_len_multiple in range(1, num_of_segments + 1):
@@ -57,29 +59,30 @@ def round_up(num_of_segments: int, float_array: [float]) -> [float]:
 # ------------------------------------- adjustable variables -------------------------------
 
 min_val = 0.0
-max_val = 10.0
-seq_length = 15
-pattern_length = 5
+max_val = 100.0
+seq_length = 1000
+pattern_length = 128
 seed = 123
-num_of_segments = 5
+num_of_segments = 10
 prob_modification = 0.2
-prob_repetition = 0.3
+prob_repetition = 0.2
 
 # ------------------------------------- /adjustable variables ------------------------------
 
 sequence = random_sequence(seq_length=seq_length)
 pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
 
-sequence = add_repetitions(sequence)
-
+# sequence = add_modifications(sequence)
+sequence, to_old_index_map = add_repetitions(sequence)
 # ------------------------------------- smith waterman -------------------------------------
+segment_length = (max_val - min_val) / num_of_segments
 rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
 rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
 
 
 @functools.cache
 def sub_matrix(a: float, b: float) -> int:
-    return 1 if a == b else 0
+    return 2 - int((abs(a - b) / segment_length))
 
 
 @functools.cache
@@ -128,6 +131,6 @@ print("Sequence: " + str(rounded_sequence))
 print("Pattern: " + str(rounded_pattern))
 print()
 print("Matched indexes: " + str(match_indexes))
-print("Actual index: " + str(pattern_index))
+print("Actual index: " + str(to_old_index_map.index(pattern_index)))
 
-print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
+# print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
