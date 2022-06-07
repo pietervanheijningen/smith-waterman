@@ -108,22 +108,26 @@ def search_back_in_row(i: int, j: int) -> int:
     return maximum
 
 
-H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
+def do_smith_waterman():
 
-for i in range(1, len(pattern) + 1):
-    for j in range(1, len(sequence) + 1):
-        H[i][j] = max(
-            H[i - 1][j - 1] + sub_matrix(rounded_sequence[j - 1], rounded_pattern[i - 1]),
-            search_back_in_column(i, j),
-            search_back_in_row(i, j),
-            0
-        )
+    for i in range(1, len(pattern) + 1):
+        for j in range(1, len(sequence) + 1):
+            H[i][j] = max(
+                H[i - 1][j - 1] + sub_matrix(rounded_sequence[j - 1], rounded_pattern[i - 1]),
+                search_back_in_column(i, j),
+                search_back_in_row(i, j),
+                0
+            )
+    return list(map(lambda a: a[1], np.argwhere(H == np.amax(H))))
+
 
 # ------------------------------------- printing values ------------------------------------
 
 rounded2_sequence = [round(x, 2) for x in sequence]  # for display purposes only
 rounded2_pattern = [round(x, 2) for x in pattern]  # for display purposes only
-match_indexes = list(map(lambda x: x[1], np.argwhere(H == np.amax(H))))
+
+H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
+match_indexes = do_smith_waterman()
 
 print("(actual) Sequence: " + str(rounded2_sequence))
 print("(actual) Pattern: " + str(rounded2_pattern))
