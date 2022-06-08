@@ -2,11 +2,12 @@ import numpy as np
 import functools
 import csv
 import time
+import sys
+
 from tabulate import tabulate
 
 
 def random_sequence(seq_length: int) -> [float]:
-    # np.random.seed(seed)
     return list(map(
         lambda x: x * (max_val - min_val) + min_val,
         np.random.random_sample(seq_length)
@@ -14,7 +15,6 @@ def random_sequence(seq_length: int) -> [float]:
 
 
 def random_pattern(pattern_length: int, sequence: [float]) -> [float]:
-    # np.random.seed(seed)
     index = np.random.randint(pattern_length - 1, len(sequence))
     return sequence[(index - pattern_length + 1):index], index
 
@@ -62,17 +62,17 @@ def round_up(num_of_segments: int, float_array: [float]) -> [float]:
 
 min_val = 0.0
 max_val = 100.0
-seq_length = 100
-pattern_length = 20
+seq_length = 20
+pattern_length = 5
 # seed = 123
 num_of_segments = 10
-prob_modification = 0.6
-prob_repetition = 0.6
+prob_modification = 0.2
+prob_repetition = 0.2
 segment_length = (max_val - min_val) / num_of_segments
+
 
 # ------------------------------------- /adjustable variables ------------------------------
 # ------------------------------------- smith waterman -------------------------------------
-
 
 
 @functools.cache
@@ -104,7 +104,6 @@ def search_back_in_row(i: int, j: int) -> int:
 
 
 def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
-
     for i in range(1, len(pattern) + 1):
         for j in range(1, len(sequence) + 1):
             H[i][j] = max(
@@ -113,7 +112,6 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
                 search_back_in_row(i, j),
                 0
             )
-    print(np.max(H[len(rounded_pattern)]))
     return list(map(lambda a: a[1], np.argwhere(H == np.amax(H[len(rounded_pattern)]))))
 
 
@@ -122,16 +120,22 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
 with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
     writer = csv.writer(file)
     writer.writerow(["iteration", "actual_index", "distance_between_avg_matched_indexes"])
-    for i in range(0, 1):
-        print(i)
+
+    if len(sys.argv) > 1:
+        print("Using set seed: " + sys.argv[1])
+        np.random.seed(int(sys.argv[1]))
+    else:
+        seed = np.random.randint(1, 2 ** 32)
+        print("Using randomly generated seed: " + str(seed))
+        np.random.seed(seed)
+
+    for i in range(0, 4):
+        print("Iteration #" + str(i) + "..")
         sequence = random_sequence(seq_length=seq_length)
         pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
 
         sequence = add_modifications(sequence)
         sequence, to_old_index_map = add_repetitions(sequence)
-
-        print(to_old_index_map)
-        print("random index: " + str(pattern_index))
 
         H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
 
@@ -141,7 +145,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         match_indexes = do_smith_waterman(rounded_sequence, rounded_pattern)
 
         actual_index = to_old_index_map.index(pattern_index)
-        # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
+        print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
 
         writer.writerow([i, actual_index, match_indexes])
 # print("(actual) Sequence: " + str(rounded2_sequence))
