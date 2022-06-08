@@ -42,6 +42,9 @@ def add_repetitions(float_array: [float]) -> [float]:
         if prob_repetition >= np.random.random_sample():
             modified_array.append(float_array[i])
             to_old_index_map.append(-1)
+            while prob_further_repetitions >= np.random.random_sample():
+                modified_array.append(float_array[i])
+                to_old_index_map.append(-1)
         j += 1
     return modified_array, to_old_index_map
 
@@ -68,6 +71,7 @@ pattern_length = 5
 num_of_segments = 10
 prob_modification = 0.2
 prob_repetition = 0.2
+prob_further_repetitions = 0.1
 segment_length = (max_val - min_val) / num_of_segments
 
 
