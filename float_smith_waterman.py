@@ -116,7 +116,8 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
                 search_back_in_row(i, j),
                 0
             )
-    return list(map(lambda a: a[1], np.argwhere(H == np.amax(H[len(rounded_pattern)]))))
+    return list(map(lambda a: a[1], np.argwhere(H == np.amax(H[len(rounded_pattern)])))), \
+           np.max(H[len(rounded_pattern)])
 
 
 # ------------------------------------- printing values ------------------------------------
@@ -146,18 +147,20 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
         rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
 
-        match_indexes = do_smith_waterman(rounded_sequence, rounded_pattern)
+        match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
+        confidence_smith_waterman = round((max_val_matrix / (2 * (pattern_length-1))) * 100, 2)
 
         actual_index = to_old_index_map.index(pattern_index)
+
+        closest_match = min(match_indexes, key=lambda x: abs(x - actual_index))
+        furthest_match = max(match_indexes, key=lambda x: abs(x - actual_index))
+        # print("Sequence: " + str(rounded_sequence))
+        # print("Pattern: " + str(rounded_pattern))
+        print("Matched indexes: " + str(match_indexes))
+        print("Actual index: " + str(actual_index))
+        print("Closest match: " + str(closest_match))
+        print("Furthest match: " + str(furthest_match))
+        print("Smith waterman confidence: " + str(confidence_smith_waterman) + "%")
         print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
-
+        print()
         writer.writerow([i, actual_index, match_indexes])
-# print("(actual) Sequence: " + str(rounded2_sequence))
-# print("(actual) Pattern: " + str(rounded2_pattern))
-# print("Sequence: " + str(rounded_sequence))
-# print("Pattern: " + str(rounded_pattern))
-# print()
-# print("Matched indexes: " + str(match_indexes))
-# print("Actual index: " + str(to_old_index_map.index(pattern_index)))
-
-# print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
