@@ -136,6 +136,11 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         print("Using randomly generated seed: " + str(seed))
         np.random.seed(seed)
 
+    goodMatchesCount = 0
+    matchesCount = 0
+
+    falseCount = 0
+    matchesWithFalseCount = 0
     for i in range(1, 4):
         print("Iteration #" + str(i) + "..")
         sequence = random_sequence(seq_length=seq_length)
@@ -166,6 +171,15 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
             if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
                 success_scores += 1
 
+        if success_scores/len(match_indexes) == 1:
+            goodMatchesCount += success_scores
+        else:
+            goodMatchesCount += success_scores
+            falseCount += len(match_indexes) - success_scores
+            matchesWithFalseCount += len(match_indexes)
+
+        matchesCount += len(match_indexes)
+
         print("Matched indexes: " + str(match_indexes))
         print("Actual index: " + str(actual_index))
         print("Closest match: " + str(closest_match))
@@ -175,3 +189,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
         print()
         writer.writerow([i, actual_index, match_indexes])
+
+    print("Summary of all runs:")
+    print("Success rate: " + str(goodMatchesCount) + "/" + str(matchesCount))
+    print("FPR: " + str(falseCount) + "/" + str(matchesWithFalseCount))
