@@ -65,8 +65,8 @@ def round_up(num_of_segments: int, float_array: [float]) -> [float]:
 
 min_val = 0.0
 max_val = 100.0
-seq_length = 20
-pattern_length = 5
+seq_length = 10000
+pattern_length = 128
 # seed = 123
 num_of_segments = 10
 prob_modification = 0.2
@@ -88,11 +88,15 @@ def sub_matrix(a: float, b: float) -> int:
 
 @functools.cache
 def gap_penalty(k: int) -> int:
-    return 2 * k
+    u = 2
+    v = 0
+
+    return (u * k) + v
 
 
 def search_back_in_column(i: int, j: int) -> int:
     maximum = H[i - 1][j] - gap_penalty(1)
+    return maximum
     for k in range(2, i + 1):
         new_val = H[i - k][j] - gap_penalty(k)
         if new_val > maximum:
@@ -102,6 +106,7 @@ def search_back_in_column(i: int, j: int) -> int:
 
 def search_back_in_row(i: int, j: int) -> int:
     maximum = H[i][j - 1] - gap_penalty(1)
+    return maximum
     for k in range(2, i + 1):
         new_val = H[i][j - k] - gap_penalty(k)
         if new_val > maximum:

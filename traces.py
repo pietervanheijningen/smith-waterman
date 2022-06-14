@@ -1,3 +1,4 @@
+# 100 traces of length 5000
 import matplotlib.pylab as plt
 import numpy as np
 
