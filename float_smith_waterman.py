@@ -67,12 +67,12 @@ min_val = 0.0
 max_val = 100.0
 seq_length = 10000
 pattern_length = 128
-# seed = 123
+num_of_iterations = 3
 num_of_segments = 10
-prob_modification = 0.2
-prob_repetition = 0.2
+prob_modification = 0.4
+prob_repetition = 0.4
 prob_further_repetitions = 0.1
-margin_of_error = 0.1
+margin_of_error = 0.005
 margin_of_error_int = int(margin_of_error * seq_length)
 segment_length = (max_val - min_val) / num_of_segments
 
@@ -141,12 +141,10 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         print("Using randomly generated seed: " + str(seed))
         np.random.seed(seed)
 
-    goodMatchesCount = 0
-    matchesCount = 0
+    success_count = 0
+    fail_count = 0
 
-    falseCount = 0
-    matchesWithFalseCount = 0
-    for i in range(1, 4):
+    for i in range(1, num_of_iterations+1):
         print("Iteration #" + str(i) + "..")
         sequence = random_sequence(seq_length=seq_length)
         pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
@@ -176,14 +174,13 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
             if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
                 success_scores += 1
 
-        if success_scores/len(match_indexes) == 1:
-            goodMatchesCount += success_scores
-        else:
-            goodMatchesCount += success_scores
-            falseCount += len(match_indexes) - success_scores
-            matchesWithFalseCount += len(match_indexes)
+        # if some were successful
+        if success_scores > 0:
+            success_count += 1
 
-        matchesCount += len(match_indexes)
+        # if some ended up outside the range
+        if success_scores != len(match_indexes):
+            fail_count += 1
 
         print("Matched indexes: " + str(match_indexes))
         print("Actual index: " + str(actual_index))
@@ -196,5 +193,5 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         writer.writerow([i, actual_index, match_indexes])
 
     print("Summary of all runs:")
-    print("Success rate: " + str(goodMatchesCount) + "/" + str(matchesCount))
-    print("FPR: " + str(falseCount) + "/" + str(matchesWithFalseCount))
+    print("TPR: " + str(success_count) + "/" + str(num_of_iterations))
+    print("FPR: " + str(fail_count) + "/" + str(num_of_iterations))
