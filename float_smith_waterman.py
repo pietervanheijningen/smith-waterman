@@ -20,7 +20,7 @@ def random_pattern(pattern_length: int, sequence: [float]) -> [float]:
 
 
 def add_modifications(float_array: [float]) -> [float]:
-    # workaround for if the float is fixed.
+    # workaround for if the seed is fixed.
     rand_array = random_sequence(len(float_array) * 2)[len(float_array):]
 
     modified_array = np.zeros(len(float_array))
@@ -29,6 +29,7 @@ def add_modifications(float_array: [float]) -> [float]:
             modified_array[i] = rand_array[i]
         else:
             modified_array[i] = float_array[i]
+
     return modified_array
 
 
@@ -46,6 +47,7 @@ def add_repetitions(float_array: [float]) -> [float]:
                 modified_array.append(float_array[i])
                 to_old_index_map.append(-1)
         j += 1
+
     return modified_array, to_old_index_map
 
 
@@ -59,26 +61,6 @@ def round_up(num_of_segments: int, float_array: [float]) -> [float]:
                 break
 
     return rounded_array
-
-
-# ------------------------------------- adjustable variables -------------------------------
-
-min_val = 0.0
-max_val = 100.0
-seq_length = 10000
-pattern_length = 128
-num_of_iterations = 3
-num_of_segments = 10
-prob_modification = 0.4
-prob_repetition = 0.4
-prob_further_repetitions = 0.1
-margin_of_error = 0.005
-margin_of_error_int = int(margin_of_error * seq_length)
-segment_length = (max_val - min_val) / num_of_segments
-
-
-# ------------------------------------- /adjustable variables ------------------------------
-# ------------------------------------- smith waterman -------------------------------------
 
 
 @functools.cache
@@ -96,7 +78,7 @@ def gap_penalty(k: int) -> int:
 
 def search_back_in_column(i: int, j: int) -> int:
     maximum = H[i - 1][j] - gap_penalty(1)
-    return maximum
+    return maximum  # comment this out to make it look back further
     for k in range(2, i + 1):
         new_val = H[i - k][j] - gap_penalty(k)
         if new_val > maximum:
@@ -106,7 +88,7 @@ def search_back_in_column(i: int, j: int) -> int:
 
 def search_back_in_row(i: int, j: int) -> int:
     maximum = H[i][j - 1] - gap_penalty(1)
-    return maximum
+    return maximum  # comment this out to make it look back further
     for k in range(2, i + 1):
         new_val = H[i][j - k] - gap_penalty(k)
         if new_val > maximum:
@@ -123,11 +105,27 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
                 search_back_in_row(i, j),
                 0
             )
-    return list(map(lambda a: a[1], np.argwhere(H == np.amax(H[len(rounded_pattern)])))), \
-           np.max(H[len(rounded_pattern)])
+    bottom_row = H[len(rounded_pattern)]
+    return list(map(lambda a: a[0], np.where(bottom_row == np.max(bottom_row)))), \
+           np.max(bottom_row)
 
 
-# ------------------------------------- printing values ------------------------------------
+# ------------------------------------- adjustable variables -------------------------------
+
+min_val = 0.0
+max_val = 100.0
+seq_length = 1000
+pattern_length = 128
+num_of_iterations = 3
+num_of_segments = 10
+prob_modification = 0.2
+prob_repetition = 0.2
+prob_further_repetitions = 0.1
+margin_of_error = 0.005
+margin_of_error_int = int(margin_of_error * seq_length)
+segment_length = (max_val - min_val) / num_of_segments
+
+# ------------------------------------- /adjustable variables ------------------------------
 
 with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
     writer = csv.writer(file)
@@ -144,7 +142,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
     success_count = 0
     fail_count = 0
 
-    for i in range(1, num_of_iterations+1):
+    for i in range(1, num_of_iterations + 1):
         print("Iteration #" + str(i) + "..")
         sequence = random_sequence(seq_length=seq_length)
         pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
@@ -164,12 +162,8 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
 
         closest_match = min(match_indexes, key=lambda x: abs(x - actual_index))
         furthest_match = max(match_indexes, key=lambda x: abs(x - actual_index))
-        # print("Sequence: " + str(rounded_sequence))
-        # print("Pattern: " + str(rounded_pattern))
 
         success_scores = 0
-        # print((actual_index - margin_of_error_int))
-        # print((actual_index + margin_of_error_int))
         for match_index in match_indexes:
             if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
                 success_scores += 1
@@ -190,7 +184,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         print("Success: " + str(success_scores) + "/" + str(len(match_indexes)))
         # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
         print()
-        writer.writerow([i, actual_index, match_indexes])
+        # writer.writerow([i, actual_index, match_indexes])
 
     print("Summary of all runs:")
     print("TPR: " + str(success_count) + "/" + str(num_of_iterations))
