@@ -1,11 +1,6 @@
 import numpy as np
 import functools
-import csv
-import time
 import sys
-
-from tabulate import tabulate
-
 
 def random_sequence(seq_length: int) -> [float]:
     return list(map(
@@ -116,76 +111,73 @@ min_val = 0.0
 max_val = 100.0
 seq_length = 10000
 pattern_length = 200
-num_of_iterations = 3
+num_of_iterations = 10
 num_of_segments = 10
-prob_modification = 0
-prob_repetition = 0
-prob_further_repetitions = 0.1
+prob_modification = 0.45
+prob_repetition = 0.45
+prob_further_repetitions = 0.2
 margin_of_error = 0.01
+
+# ------------------------------------- /adjustable variables ------------------------------
 margin_of_error_int = int(margin_of_error * seq_length)
 segment_length = (max_val - min_val) / num_of_segments
 
-# ------------------------------------- /adjustable variables ------------------------------
 
-with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
-    writer = csv.writer(file)
-    writer.writerow(["iteration", "actual_index", "distance_between_avg_matched_indexes"])
+if len(sys.argv) > 1:
+    print("Using set seed: " + sys.argv[1])
+    np.random.seed(int(sys.argv[1]))
+else:
+    seed = np.random.randint(1, 2 ** 32)
+    print("Using randomly generated seed: " + str(seed))
+    np.random.seed(seed)
 
-    if len(sys.argv) > 1:
-        print("Using set seed: " + sys.argv[1])
-        np.random.seed(int(sys.argv[1]))
-    else:
-        seed = np.random.randint(1, 2 ** 32)
-        print("Using randomly generated seed: " + str(seed))
-        np.random.seed(seed)
+success_count = 0
+fail_count = 0
 
-    success_count = 0
-    fail_count = 0
+for i in range(1, num_of_iterations + 1):
+    print("Iteration #" + str(i) + "..")
+    sequence = random_sequence(seq_length=seq_length)
+    pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
 
-    for i in range(1, num_of_iterations + 1):
-        print("Iteration #" + str(i) + "..")
-        sequence = random_sequence(seq_length=seq_length)
-        pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
+    sequence = add_modifications(sequence)
+    sequence, to_old_index_map = add_repetitions(sequence)
 
-        sequence = add_modifications(sequence)
-        sequence, to_old_index_map = add_repetitions(sequence)
+    H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
 
-        H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
+    rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
+    rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
 
-        rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
-        rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
+    match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
+    confidence_smith_waterman = round((max_val_matrix / (2 * (pattern_length))) * 100, 2)  # aka coverage
 
-        match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
-        confidence_smith_waterman = round((max_val_matrix / (2 * (pattern_length))) * 100, 2)  # aka coverage
+    actual_index = to_old_index_map.index(pattern_index)
 
-        actual_index = to_old_index_map.index(pattern_index)
+    closest_match = min(match_indexes, key=lambda x: abs(x - actual_index))
+    furthest_match = max(match_indexes, key=lambda x: abs(x - actual_index))
 
-        closest_match = min(match_indexes, key=lambda x: abs(x - actual_index))
-        furthest_match = max(match_indexes, key=lambda x: abs(x - actual_index))
+    success_scores = 0
+    for match_index in match_indexes:
+        if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
+            success_scores += 1
 
-        success_scores = 0
-        for match_index in match_indexes:
-            if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
-                success_scores += 1
+    # if some were successful
+    if success_scores > 0:
+        success_count += 1
 
-        # if some were successful
-        if success_scores > 0:
-            success_count += 1
+    # if some ended up outside the range
+    if success_scores != len(match_indexes):
+        fail_count += 1
 
-        # if some ended up outside the range
-        if success_scores != len(match_indexes):
-            fail_count += 1
+    print("Matched indexes: " + str(match_indexes))
+    print("Actual index: " + str(actual_index))
+    print("Closest match: " + str(closest_match))
+    print("Furthest match: " + str(furthest_match))
+    print("Smith waterman confidence: " + str(confidence_smith_waterman) + "%")
+    print("Success: " + str(success_scores) + "/" + str(len(match_indexes)))
+    # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
+    print()
 
-        print("Matched indexes: " + str(match_indexes))
-        print("Actual index: " + str(actual_index))
-        print("Closest match: " + str(closest_match))
-        print("Furthest match: " + str(furthest_match))
-        print("Smith waterman confidence: " + str(confidence_smith_waterman) + "%")
-        print("Success: " + str(success_scores) + "/" + str(len(match_indexes)))
-        # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
-        print()
-        # writer.writerow([i, actual_index, match_indexes])
+print("Summary of all runs:")
+print("TPR: " + str(success_count) + "/" + str(num_of_iterations))
+print("FPR: " + str(fail_count) + "/" + str(num_of_iterations))
 
-    print("Summary of all runs:")
-    print("TPR: " + str(success_count) + "/" + str(num_of_iterations))
-    print("FPR: " + str(fail_count) + "/" + str(num_of_iterations))
