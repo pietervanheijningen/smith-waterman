@@ -16,7 +16,7 @@ def random_sequence(seq_length: int) -> [float]:
 
 def random_pattern(pattern_length: int, sequence: [float]) -> [float]:
     index = np.random.randint(pattern_length - 1, len(sequence))
-    return sequence[(index - pattern_length):index], index
+    return sequence[(index - pattern_length + 1):index + 1], index
 
 
 def add_modifications(float_array: [float]) -> [float]:
@@ -156,7 +156,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
 
         match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
-        confidence_smith_waterman = round((max_val_matrix / (2 * (pattern_length - 1))) * 100, 2)  # aka coverage
+        confidence_smith_waterman = round((max_val_matrix / (2 * (pattern_length))) * 100, 2)  # aka coverage
 
         actual_index = to_old_index_map.index(pattern_index)
 
