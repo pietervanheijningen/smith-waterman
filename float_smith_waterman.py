@@ -16,7 +16,7 @@ def random_sequence(seq_length: int) -> [float]:
 
 def random_pattern(pattern_length: int, sequence: [float]) -> [float]:
     index = np.random.randint(pattern_length - 1, len(sequence))
-    return sequence[(index - pattern_length + 1):index], index
+    return sequence[(index - pattern_length):index], index
 
 
 def add_modifications(float_array: [float]) -> [float]:
@@ -78,7 +78,7 @@ def gap_penalty(k: int) -> int:
 
 def search_back_in_column(i: int, j: int) -> int:
     maximum = H[i - 1][j] - gap_penalty(1)
-    return maximum  # comment this out to make it look back further
+    # return maximum  # comment this out to make it look back further
     for k in range(2, i + 1):
         new_val = H[i - k][j] - gap_penalty(k)
         if new_val > maximum:
@@ -88,7 +88,7 @@ def search_back_in_column(i: int, j: int) -> int:
 
 def search_back_in_row(i: int, j: int) -> int:
     maximum = H[i][j - 1] - gap_penalty(1)
-    return maximum  # comment this out to make it look back further
+    # return maximum  # comment this out to make it look back further
     for k in range(2, i + 1):
         new_val = H[i][j - k] - gap_penalty(k)
         if new_val > maximum:
@@ -121,7 +121,7 @@ num_of_segments = 10
 prob_modification = 0.2
 prob_repetition = 0.2
 prob_further_repetitions = 0.1
-margin_of_error = 0.005
+margin_of_error = 0.01
 margin_of_error_int = int(margin_of_error * seq_length)
 segment_length = (max_val - min_val) / num_of_segments
 
@@ -182,7 +182,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         print("Furthest match: " + str(furthest_match))
         print("Smith waterman confidence: " + str(confidence_smith_waterman) + "%")
         print("Success: " + str(success_scores) + "/" + str(len(match_indexes)))
-        # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
+        print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
         print()
         # writer.writerow([i, actual_index, match_indexes])
 
