@@ -78,7 +78,7 @@ def gap_penalty(k: int) -> int:
 
 def search_back_in_column(i: int, j: int) -> int:
     maximum = H[i - 1][j] - gap_penalty(1)
-    # return maximum  # comment this out to make it look back further
+    return maximum  # comment this out to make it look back further
     for k in range(2, i + 1):
         new_val = H[i - k][j] - gap_penalty(k)
         if new_val > maximum:
@@ -88,7 +88,7 @@ def search_back_in_column(i: int, j: int) -> int:
 
 def search_back_in_row(i: int, j: int) -> int:
     maximum = H[i][j - 1] - gap_penalty(1)
-    # return maximum  # comment this out to make it look back further
+    return maximum  # comment this out to make it look back further
     for k in range(2, i + 1):
         new_val = H[i][j - k] - gap_penalty(k)
         if new_val > maximum:
@@ -106,7 +106,7 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
                 0
             )
     bottom_row = H[len(rounded_pattern)]
-    return list(map(lambda a: a[0], np.where(bottom_row == np.max(bottom_row)))), \
+    return list(map(lambda a: a[0] - 1, np.argwhere(bottom_row == np.amax(bottom_row)))), \
            np.max(bottom_row)
 
 
@@ -114,12 +114,12 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
 
 min_val = 0.0
 max_val = 100.0
-seq_length = 1000
-pattern_length = 128
+seq_length = 10000
+pattern_length = 200
 num_of_iterations = 3
 num_of_segments = 10
-prob_modification = 0.2
-prob_repetition = 0.2
+prob_modification = 0
+prob_repetition = 0
 prob_further_repetitions = 0.1
 margin_of_error = 0.01
 margin_of_error_int = int(margin_of_error * seq_length)
@@ -182,7 +182,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
         print("Furthest match: " + str(furthest_match))
         print("Smith waterman confidence: " + str(confidence_smith_waterman) + "%")
         print("Success: " + str(success_scores) + "/" + str(len(match_indexes)))
-        print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
+        # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
         print()
         # writer.writerow([i, actual_index, match_indexes])
 
