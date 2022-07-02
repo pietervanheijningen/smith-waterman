@@ -113,13 +113,13 @@ pattern = list(map(lambda x: float(x), bytearray(fh.read())))
 fh.close()
 
 fh2 = open('real-world-data/adc_stream.data', 'rb')
-sequence = list(map(lambda x: float(x), bytearray(fh2.read())))
+original_sequence = list(map(lambda x: float(x), bytearray(fh2.read())))
 fh2.close()
 
 
-min_val = min(sequence)
-max_val = max(sequence)
-seq_length = len(sequence)
+min_val = min(original_sequence)
+max_val = max(original_sequence)
+seq_length = len(original_sequence)
 pattern_length = len(pattern)
 num_of_iterations = 10
 num_of_segments = 16
@@ -135,7 +135,7 @@ print(pattern_length)
 margin_of_error_int = int(margin_of_error * seq_length)
 segment_length = (max_val - min_val) / num_of_segments
 
-actual_indexes = [541, 1091, 1641, 2191, 2741]
+original_actual_indexes = [541, 1091, 1641, 2191, 2741]
 
 if len(sys.argv) > 1:
     print("Using set seed: " + sys.argv[1])
@@ -148,7 +148,7 @@ else:
 with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
     writer = csv.writer(file)
 
-    for j in range(0, 8):
+    for j in range(0, 21):
 
         prob_modification = 0.05 * j
         prob_repetition = 0.05 * j
@@ -157,8 +157,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
 
         hit_rates = []
         for i in range(1, num_of_iterations + 1):
-            sequence = add_modifications(sequence)
-            sequence, to_old_index_map = add_repetitions(sequence)
+            sequence, to_old_index_map = add_repetitions(add_modifications(original_sequence))
 
             H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
 
@@ -167,7 +166,7 @@ with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
 
             match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
 
-            actual_indexes = list(map(lambda x: to_old_index_map.index(x), actual_indexes))
+            actual_indexes = list(map(lambda x: to_old_index_map.index(x), original_actual_indexes))
 
             hits = 0
             for match_index in match_indexes:
