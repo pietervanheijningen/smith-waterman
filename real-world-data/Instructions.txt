@@ -1,0 +1,8 @@
+These files are the trace file(adc_stream.data) and the reference pattern(ref_stream.data) which were used for testing the SAD design.
+The adc_stream.data consists of a large trace in which the reference pattern occurs mutliple times.
+
+Use a hex editor for viewing these files.
+
+This provides reference information on how the reference trace and the incoming side channel looks like.
+These are not related to the trs file data.
+

@@ -1,5 +1,7 @@
 import numpy as np
 import functools
+import time
+import csv
 import sys
 
 def random_sequence(seq_length: int) -> [float]:
@@ -106,22 +108,34 @@ def do_smith_waterman(rounded_sequence: [float], rounded_pattern: [float]):
 
 
 # ------------------------------------- adjustable variables -------------------------------
+fh = open('real-world-data/ref_stream.data', 'rb')
+pattern = list(map(lambda x: float(x), bytearray(fh.read())))
+fh.close()
 
-min_val = 0.0
-max_val = 100.0
-seq_length = 10000
-pattern_length = 200
+fh2 = open('real-world-data/adc_stream.data', 'rb')
+sequence = list(map(lambda x: float(x), bytearray(fh2.read())))
+fh2.close()
+
+
+min_val = min(sequence)
+max_val = max(sequence)
+seq_length = len(sequence)
+pattern_length = len(pattern)
 num_of_iterations = 10
-num_of_segments = 10
-prob_modification = 0.45
-prob_repetition = 0.45
-prob_further_repetitions = 0.2
+num_of_segments = 16
+prob_modification = 0.0
+prob_repetition = 0.0
+prob_further_repetitions = 0
 margin_of_error = 0.01
+
+print(seq_length)
+print(pattern_length)
 
 # ------------------------------------- /adjustable variables ------------------------------
 margin_of_error_int = int(margin_of_error * seq_length)
 segment_length = (max_val - min_val) / num_of_segments
 
+actual_indexes = [541, 1091, 1641, 2191, 2741]
 
 if len(sys.argv) > 1:
     print("Using set seed: " + sys.argv[1])
@@ -131,53 +145,41 @@ else:
     print("Using randomly generated seed: " + str(seed))
     np.random.seed(seed)
 
-success_count = 0
-fail_count = 0
+with open("results/" + str(int(time.time())) + '.csv', 'w') as file:
+    writer = csv.writer(file)
 
-for i in range(1, num_of_iterations + 1):
-    print("Iteration #" + str(i) + "..")
-    sequence = random_sequence(seq_length=seq_length)
-    pattern, pattern_index = random_pattern(pattern_length=pattern_length, sequence=sequence)
+    for j in range(0, 8):
 
-    sequence = add_modifications(sequence)
-    sequence, to_old_index_map = add_repetitions(sequence)
+        prob_modification = 0.05 * j
+        prob_repetition = 0.05 * j
 
-    H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
+        print("prob: " + str(0.05 * j))
 
-    rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
-    rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
+        hit_rates = []
+        for i in range(1, num_of_iterations + 1):
+            sequence = add_modifications(sequence)
+            sequence, to_old_index_map = add_repetitions(sequence)
 
-    match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
-    confidence_smith_waterman = round((max_val_matrix / (2 * (pattern_length))) * 100, 2)  # aka coverage
+            H = np.zeros(shape=(len(pattern) + 1, len(sequence) + 1))
 
-    actual_index = to_old_index_map.index(pattern_index)
+            rounded_pattern = round_up(num_of_segments=num_of_segments, float_array=pattern)
+            rounded_sequence = round_up(num_of_segments=num_of_segments, float_array=sequence)
 
-    closest_match = min(match_indexes, key=lambda x: abs(x - actual_index))
-    furthest_match = max(match_indexes, key=lambda x: abs(x - actual_index))
+            match_indexes, max_val_matrix = do_smith_waterman(rounded_sequence, rounded_pattern)
 
-    success_scores = 0
-    for match_index in match_indexes:
-        if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
-            success_scores += 1
+            actual_indexes = list(map(lambda x: to_old_index_map.index(x), actual_indexes))
 
-    # if some were successful
-    if success_scores > 0:
-        success_count += 1
+            hits = 0
+            for match_index in match_indexes:
+                for actual_index in actual_indexes:
+                    if (actual_index - margin_of_error_int) <= match_index <= (actual_index + margin_of_error_int):
+                        hits += 1
 
-    # if some ended up outside the range
-    if success_scores != len(match_indexes):
-        fail_count += 1
+            hit_rates.append(hits)
 
-    print("Matched indexes: " + str(match_indexes))
-    print("Actual index: " + str(actual_index))
-    print("Closest match: " + str(closest_match))
-    print("Furthest match: " + str(furthest_match))
-    print("Smith waterman confidence: " + str(confidence_smith_waterman) + "%")
-    print("Success: " + str(success_scores) + "/" + str(len(match_indexes)))
-    # print(tabulate(H, showindex=([""] + rounded_pattern), headers=rounded_sequence, tablefmt="presto"))
-    print()
+            print("Matched indexes: " + str(match_indexes))
+            print("hits: " + str(hits))
+            print()
 
-print("Summary of all runs:")
-print("TPR: " + str(success_count) + "/" + str(num_of_iterations))
-print("FPR: " + str(fail_count) + "/" + str(num_of_iterations))
-
+        print(np.average(hit_rates))
+        writer.writerow([round(prob_modification, 2), round(np.average(hit_rates), 2)])
