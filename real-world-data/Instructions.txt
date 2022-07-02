@@ -4,5 +4,4 @@ The adc_stream.data consists of a large trace in which the reference pattern occ
 Use a hex editor for viewing these files.
 
 This provides reference information on how the reference trace and the incoming side channel looks like.
-These are not related to the trs file data.
 
